@@ -37,7 +37,7 @@ def preprocess_data(data_path, labels_path=None):
 
     return sj, iq
 
-sj_train, iq_train = preprocess_data('CSV/dengue_features_train.csv',
+sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
                                      labels_path="CSV/dengue_labels_train.csv")
 
 from datetime import datetime, date, timedelta

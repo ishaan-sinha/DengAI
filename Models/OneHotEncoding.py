@@ -7,7 +7,9 @@ from statsmodels.graphics.tsaplots import plot_pacf, plot_acf
 #
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
+from sklearn.preprocessing import OneHotEncoder
+
+
 
 
 def preprocess_data(data_path, labels_path=None):
@@ -34,7 +36,7 @@ def preprocess_data(data_path, labels_path=None):
 
     return sj, iq
 
-sj_train, iq_train = preprocess_data('CSV/dengue_features_train.csv',
+sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
                                      labels_path="CSV/dengue_labels_train.csv")
 
 sj_train['date'] = pd.to_datetime(sj_train['week_start_date'])
@@ -42,17 +44,11 @@ sj_train.set_index('date', inplace = True)
 sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #frequency is weekly
 sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
 
+X_1 = pd.DataFrame(data = pd.get_dummies(sj_train.index.month, prefix="month"))
+X_1.index = sj_train.index
 
-sj_train['month'] = int(sj_train.index.month[0])
-sj_train['month_sin'] = np.sin(sj_train['month']/(12 * 2 * np.pi))
-sj_train['month_cos'] = np.cos(sj_train['month']/(12 * 2 * np.pi))
+sj_train = pd.concat([sj_train, X_1], axis = 'columns')
 
-
-sj_train['week'] = int(sj_train.index.week[0])
-sj_train["week_sin"] = np.sin(sj_train['week']/(52 * 2 * np.pi))
-sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
-
-sj_train.drop(['month','week'],axis=1, inplace = True)
 
 sj_train_subtrain = sj_train.head(800).dropna()
 sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
@@ -60,9 +56,8 @@ sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-sj_train_subtrain_exog = sj_train_subtrain.drop(['total_cases', 'week_start_date',], axis = 1)
+sj_train_subtrain_exog = sj_train_subtrain.drop(['total_cases', 'week_start_date'], axis = 1)
 sj_train_subtest_exog = sj_train_subtest.drop(['total_cases', 'week_start_date'], axis = 1)
-
 
 
 model = SARIMAX(sj_train_subtrain['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_subtrain_exog)
@@ -76,7 +71,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('(2,0,2)(1,0,1,52)[weather4, lastyear, week and month cyclic encodings]')
+plt.savefig('SARIMAX(2,0,2)(1,0,1,52)[weather4, lastyear, oneHotEncodingForMonth]')
 
 from sklearn.metrics import r2_score
 
@@ -84,4 +79,3 @@ compare_df.dropna(inplace = True)
 print(mean_squared_error(compare_df['actual'], compare_df['predicted_mean'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted_mean']))
 print(r2_score(compare_df['actual'], compare_df['predicted_mean']))
-

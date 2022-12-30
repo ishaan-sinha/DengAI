@@ -34,18 +34,13 @@ def preprocess_data(data_path, labels_path=None):
 
     return sj, iq
 
-sj_train, iq_train = preprocess_data('CSV/dengue_features_train.csv',
+sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
                                      labels_path="CSV/dengue_labels_train.csv")
 
 sj_train['date'] = pd.to_datetime(sj_train['week_start_date'])
 sj_train.set_index('date', inplace = True)
 sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #frequency is weekly
 sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
-sj_train['1w'] = sj_train['total_cases'].shift(1, axis = 0)
-sj_train['2w'] = sj_train['total_cases'].shift(2, axis = 0)
-sj_train['3w'] = sj_train['total_cases'].shift(3, axis = 0)
-sj_train['last3WeekAverage'] = (sj_train['1w']+sj_train['2w']+sj_train['3w'])/3
-sj_train.drop(['1w','2w','3w'], axis = 1)
 
 
 sj_train['month'] = int(sj_train.index.month[0])
@@ -58,9 +53,6 @@ sj_train["week_sin"] = np.sin(sj_train['week']/(52 * 2 * np.pi))
 sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
 
 sj_train.drop(['month','week'],axis=1, inplace = True)
-
-
-
 
 sj_train_subtrain = sj_train.head(800).dropna()
 sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
@@ -84,7 +76,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('RANDOMTEST')
+plt.savefig('(2,0,2)(1,0,1,52)[weather4, lastyear, week and month cyclic encodings]')
 
 from sklearn.metrics import r2_score
 
