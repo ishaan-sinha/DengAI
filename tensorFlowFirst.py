@@ -97,7 +97,7 @@ sj_train_subtest = (sj_train_subtest-sj_train_subtrain_mean)/sj_train_subtrain_s
 
 class WindowGenerator():
   def __init__(self, input_width, label_width, shift,
-               train_df=train_df, val_df=val_df, test_df=test_df,
+               train_df=sj_train_subtrain, val_df=sj_train_subvalidate, test_df=sj_train_subtest,
                label_columns=None):
     # Store the raw data.
     self.train_df = train_df
@@ -133,3 +133,7 @@ class WindowGenerator():
         f'Label indices: {self.label_indices}',
         f'Label column name(s): {self.label_columns}'])
 
+print(len(sj_train_subtrain) + len(sj_train_subvalidate))
+print(len(sj_train_subtest))
+
+w1 = WindowGenerator(input_width = 845, label_width= 94, shift = 1, label_columns=['total_cases'])

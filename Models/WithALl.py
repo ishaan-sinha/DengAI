@@ -92,13 +92,6 @@ useless = ['diff1-2', 'precipitation_amt_mm', 'month_sin', 'last3WeekAverage', '
 sj_train_subtrain_exog = sj_train_subtrain_exog.drop(useless, axis = 1)
 sj_train_subtest_exog = sj_train_subtest_exog.drop(useless, axis=1)
 
-'''
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
-sj_train_subtest_exog[sj_train_subtest_exog.columns] = scaler.fit_transform(sj_train_subtest_exog[sj_train_subtest_exog.columns])
-sj_train_subtrain_exog[sj_train_subtrain_exog.columns] = scaler.fit_transform(sj_train_subtrain[sj_train_subtrain_exog.columns])
-#minMax Scaling
-'''
 
 model = SARIMAX(sj_train_subtrain['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_subtrain_exog)
 model_fitted = model.fit()
