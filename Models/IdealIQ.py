@@ -37,35 +37,33 @@ sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
 
 from datetime import datetime, date, timedelta
 
-df = pd.DataFrame(np.nan, index=[datetime.strptime('2000-12-31', '%Y-%m-%d'), datetime.strptime('2006-12-31', '%Y-%m-%d')], columns=sj_train.columns)
-iq_train.set_index(pd.to_datetime(iq_train['week_start_date'], format='%Y-%m-%d'), inplace = True)
-iq_train.index = pd.DatetimeIndex(iq_train.index)
-iq_train = pd.concat([iq_train, df])
+df = pd.DataFrame(np.nan, index=[datetime.strptime('1995-12-25', '%Y-%m-%d'), datetime.strptime('2000-12-25', '%Y-%m-%d'), datetime.strptime('2006-12-25', '%Y-%m-%d')], columns=sj_train.columns)
+sj_train.set_index(pd.to_datetime(sj_train['week_start_date'], format='%Y-%m-%d'), inplace = True)
+sj_train.index = pd.DatetimeIndex(sj_train.index)
+sj_train = pd.concat([sj_train, df])
 
-iq_train.index = pd.DatetimeIndex(iq_train.index).to_period('W') #period is one week
-iq_train.sort_index(inplace = True)
-iq_train.fillna(method='ffill', inplace=True)
-iq_train.to_csv('iq_train.csv')
+sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #period is one week
+sj_train.sort_index(inplace = True)
+sj_train.fillna(method='ffill', inplace=True)
 #Extremely janky but works
-for i in pd.date_range(start='6-26-2000', end = '6-27-2010', freq='W'):
-    if i not in iq_train.index:
-        print(i)
 
 
 
 
-'''2000-12-31 00:00:00
-2006-12-31 00:00:00
+
+'''1995-12-25 00:00:00
+2000-12-25 00:00:00
+2006-12-25 00:00:00'''
+sj_train.to_csv('presj_train.csv')
+
+
+
+
 '''
-
-
-
-
-'''
-iq_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
-iq_train_subtrain = iq_train.head(400)
-iq_train_subtest = iq_train.tail(iq_train.shape[0] - 400)
-iq_train_subtrain.dropna(inplace = True)
+sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
+sj_train_subtrain = sj_train.head(800)
+sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
+sj_train_subtrain.dropna(inplace = True)
 
 
 
