@@ -80,7 +80,6 @@ sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
 
 sj_train.drop(['month','week'],axis=1, inplace = True)
 
-sj_train.to_csv('tempdf1.csv')
 #Split data
 n = len(sj_train)
 sj_train_subtrain = sj_train[0:int(n*0.7)]
@@ -133,7 +132,24 @@ class WindowGenerator():
         f'Label indices: {self.label_indices}',
         f'Label column name(s): {self.label_columns}'])
 
-print(len(sj_train_subtrain) + len(sj_train_subvalidate))
-print(len(sj_train_subtest))
+
 
 w1 = WindowGenerator(input_width = 845, label_width= 94, shift = 1, label_columns=['total_cases'])
+
+def split_window(self, features):
+  inputs = features[:, self.input_slice, :]
+  labels = features[:, self.labels_slice, :]
+  if self.label_columns is not None:
+    labels = tf.stack(
+        [labels[:, :, self.column_indices[name]] for name in self.label_columns],
+        axis=-1)
+
+  # Slicing doesn't preserve static shape information, so set the shapes
+  # manually. This way the `tf.data.Datasets` are easier to inspect.
+  inputs.set_shape([None, self.input_width, None])
+  labels.set_shape([None, self.label_width, None])
+
+  return inputs, labels
+
+WindowGenerator.split_window = split_window# Stack three slices, the length of the total window.
+
