@@ -47,21 +47,17 @@ iq_train.sort_index(inplace = True)
 iq_train.fillna(method='ffill', inplace=True)
 iq_train.to_csv('iq_train.csv')
 #Extremely janky but works
+'''
 for i in pd.date_range(start='6-26-2000', end = '6-27-2010', freq='W'):
     if i not in iq_train.index:
         print(i)
 
 
-
-
-'''2000-12-31 00:00:00
+2000-12-31 00:00:00
 2006-12-31 00:00:00
-'''
 
 
 
-
-'''
 iq_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
 iq_train_subtrain = iq_train.head(400)
 iq_train_subtest = iq_train.tail(iq_train.shape[0] - 400)

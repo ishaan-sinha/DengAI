@@ -38,7 +38,15 @@ def preprocess_data(data_path, labels_path=None):
 
 sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
                                      labels_path="../CSV/dengue_labels_train.csv")
+testExog = pd.read_csv('../dengue_features_test.csv', index_col=[0, 1, 2])
+sjTest = testExog.loc['sj']
+iqTest = testExog.loc['iq']
+sjTest.set_index(pd.to_datetime(sjTest['week_start_date'], format='%Y-%m-%d'), inplace=True)
+sjTest.index = pd.DatetimeIndex(sjTest.index)
+sjTest.index = pd.DatetimeIndex(sjTest.index).to_period('W')
+sjTest.sort_index(inplace=True)
 
+'''
 from datetime import datetime, date, timedelta
 
 df = pd.DataFrame(np.nan, index=[datetime.strptime('1995-12-25', '%Y-%m-%d'), datetime.strptime('2000-12-25', '%Y-%m-%d'), datetime.strptime('2006-12-25', '%Y-%m-%d')], columns=sj_train.columns)
@@ -51,9 +59,8 @@ sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #period is one 
 sj_train.sort_index(inplace = True)
 sj_train.interpolate(option = 'spline', inplace=True)
 sj_train.fillna(method='ffill', inplace=True)
+
 #Extremely janky but works
-
-
 sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
 sj_train['1w'] = sj_train['total_cases'].shift(1, axis = 0)
 sj_train['2w'] = sj_train['total_cases'].shift(2, axis = 0)
@@ -74,30 +81,18 @@ sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
 
 sj_train.drop(['month','week'],axis=1, inplace = True)
 
-
-
-
-sj_train_subtrain = sj_train.head(800).dropna()
-sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
+sj_train = sj_train.dropna()
 
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-sj_train_subtrain_exog = sj_train_subtrain.drop(['total_cases', 'week_start_date',], axis = 1)
-print(sj_train_subtrain_exog.index)
-sj_train_subtest_exog = sj_train_subtest.drop(['total_cases', 'week_start_date'], axis = 1)
+sj_train_exog = sj_train.drop(['total_cases', 'week_start_date',], axis = 1)
 
-'''
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
-sj_train_subtest_exog[sj_train_subtest_exog.columns] = scaler.fit_transform(sj_train_subtest_exog[sj_train_subtest_exog.columns])
-sj_train_subtrain_exog[sj_train_subtrain_exog.columns] = scaler.fit_transform(sj_train_subtrain[sj_train_subtrain_exog.columns])
-#minMax Scaling
-'''
 
-model = SARIMAX(sj_train_subtrain['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_subtrain_exog)
+
+model = SARIMAX(sj_train['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_exog)
 model_fitted = model.fit()
-predictions = model_fitted.predict(start = len(sj_train_subtrain), end = len(sj_train_subtrain)+len(sj_train_subtest)-1, exog=sj_train_subtest_exog,dynamic=False)
+predictions = model_fitted.predict(start = len(sj_train), end = len(sj_train)+len(sjTest)-1, exog=,dynamic=False)
 compare_df = pd.concat([sj_train_subtest['total_cases'], predictions], axis=1).rename(columns={'total_cases': 'actual', 0:'predicted'})
 compare_df.to_csv('tempdf1.csv')
 
@@ -116,3 +111,4 @@ print(mean_squared_error(compare_df['actual'], compare_df['predicted_mean'], squ
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted_mean']))
 print(r2_score(compare_df['actual'], compare_df['predicted_mean']))
 
+'''

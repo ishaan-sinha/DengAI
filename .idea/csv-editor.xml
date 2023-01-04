@@ -24,7 +24,21 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/Models/compare.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/Models/iq_train.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="$USER_HOME$/Downloads/dengue_features_test.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

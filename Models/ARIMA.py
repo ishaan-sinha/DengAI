@@ -75,7 +75,7 @@ for p in range(1,10):
 best_lag = min(aic_values, key=aic_values.get)
 print("best lag:" + str(best_lag))
 '''
-#optiml is 3,8
+#optimal is 3,8
 
 model = ARIMA(sj_train_subtrain['total_cases'], order = (3,0,8))
 model_fitted = model.fit()
