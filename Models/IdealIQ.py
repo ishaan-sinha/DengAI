@@ -45,7 +45,7 @@ iq_train.fillna(method='ffill', inplace=True)
 
 #Extremely janky but works
 
-
+'''
 iq_train['last_year_cases'] = iq_train['total_cases'].shift(52, axis = 0)
 iq_train['1w'] = iq_train['total_cases'].shift(1, axis = 0)
 iq_train['2w'] = iq_train['total_cases'].shift(2, axis = 0)
@@ -54,6 +54,9 @@ iq_train['last3WeekAverage'] = (iq_train['1w']+iq_train['2w']+iq_train['3w'])/3
 iq_train.drop(['1w','2w','3w'], axis = 1)
 iq_train['diff1-2'] = iq_train['1w'] - iq_train['2w']
 iq_train['diff2-3'] = iq_train['2w'] - iq_train['3w']
+'''
+
+iq_train['4yearsAgo'] = iq_train['total_cases'].shift(208, axis = 0)
 
 iq_train['month'] = int(iq_train.index.month[0])
 iq_train['month_sin'] = np.sin(iq_train['month']/(12 * 2 * np.pi))
@@ -65,8 +68,6 @@ iq_train["week_sin"] = np.sin(iq_train['week']/(52 * 2 * np.pi))
 iq_train["week_cos"] = np.cos(iq_train['week']/(52 * 2 * np.pi))
 
 iq_train.drop(['month','week'],axis=1, inplace = True)
-
-
 
 
 iq_train_subtrain = iq_train.head(400).dropna()
@@ -114,7 +115,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('idealIQ')
+plt.savefig('Iq[4 years ago, all weather]')
 
 from sklearn.metrics import r2_score
 

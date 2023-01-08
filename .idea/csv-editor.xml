@@ -38,14 +38,7 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="$USER_HOME$/Downloads/dengue_features_test.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/tempdf1.csv">
+        <entry key="/dengue_features_test.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
