@@ -53,7 +53,7 @@ sj_train.interpolate(option = 'spline', inplace=True)
 sj_train.fillna(method='ffill', inplace=True)
 #Extremely janky but works
 
-
+'''
 sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
 sj_train['1w'] = sj_train['total_cases'].shift(1, axis = 0)
 sj_train['2w'] = sj_train['total_cases'].shift(2, axis = 0)
@@ -62,6 +62,9 @@ sj_train['last3WeekAverage'] = (sj_train['1w']+sj_train['2w']+sj_train['3w'])/3
 sj_train.drop(['1w','2w','3w'], axis = 1)
 sj_train['diff1-2'] = sj_train['1w'] - sj_train['2w']
 sj_train['diff2-3'] = sj_train['2w'] - sj_train['3w']
+'''
+
+sj_train['4yearsAgo'] = sj_train['total_cases'].shift(260, axis = 0)
 
 sj_train['month'] = int(sj_train.index.month[0])
 sj_train['month_sin'] = np.sin(sj_train['month']/(12 * 2 * np.pi))
@@ -73,8 +76,6 @@ sj_train["week_sin"] = np.sin(sj_train['week']/(52 * 2 * np.pi))
 sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
 
 sj_train.drop(['month','week'],axis=1, inplace = True)
-
-
 
 
 sj_train_subtrain = sj_train.head(800).dropna()
@@ -107,7 +108,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('idealSJ')
+plt.savefig('SJ[5 years ago, all weather]')
 
 from sklearn.metrics import r2_score
 

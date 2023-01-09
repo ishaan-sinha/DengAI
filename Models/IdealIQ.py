@@ -120,7 +120,7 @@ plt.savefig('Iq[4 years ago, all weather]')
 from sklearn.metrics import r2_score
 
 compare_df.to_csv('compare.csv')
-print(mean_squared_error(compare_df['actual'], compare_df['predicted_mean'], squared=False))
+print(mean_squared_error(compare_df['actual'], compare_df['predicted_mean'], squared=True))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted_mean']))
 print(r2_score(compare_df['actual'], compare_df['predicted_mean']))
 
