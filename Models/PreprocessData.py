@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime
 
 import pandas as pd
@@ -77,37 +78,84 @@ iq_train.sort_index(inplace = True)
 iq_train.interpolate(option = 'spline', inplace=True)
 iq_train.fillna(method='ffill', inplace=True)
 
+sj = sj_train.append(sjTest)
+iq = iq_train.append(iqTest)
 
 
-sj_train['4yearsAgo'] = sj_train['total_cases'].shift(260, axis = 0)
+sj['4yearsAgo'] = sj['total_cases'].shift(260, axis = 0)
 
-sj_train['month'] = int(sj_train.index.month[0])
-sj_train['month_sin'] = np.sin(sj_train['month']/(12 * 2 * np.pi))
-sj_train['month_cos'] = np.cos(sj_train['month']/(12 * 2 * np.pi))
-
-
-sj_train['week'] = int(sj_train.index.week[0])
-sj_train["week_sin"] = np.sin(sj_train['week']/(52 * 2 * np.pi))
-sj_train["week_cos"] = np.cos(sj_train['week']/(52 * 2 * np.pi))
-
-sj_train.drop(['month','week'],axis=1, inplace = True)
+sj['month'] = pd.DatetimeIndex(sj['week_start_date']).month
+sj['month_sin'] = np.sin((2 * np.pi * sj['month'])/12)
+sj['month_cos'] = np.cos((2 * np.pi * sj['month'])/12)
 
 
-iq_train['4yearsAgo'] = iq_train['total_cases'].shift(208, axis = 0)
+sj['week'] = pd.DatetimeIndex(sj['week_start_date']).week
+sj["week_sin"] = np.sin((2 * np.pi * sj['week'])/52)
+sj["week_cos"] = np.cos((2 * np.pi * sj['week'])/52)
 
-iq_train['month'] = int(iq_train.index.month[0])
-iq_train['month_sin'] = np.sin(iq_train['month']/(12 * 2 * np.pi))
-iq_train['month_cos'] = np.cos(iq_train['month']/(12 * 2 * np.pi))
+sj.drop(['month','week'],axis=1, inplace = True)
+
+sj.to_csv('sj.csv')
+
+iq['4yearsAgo'] = iq['total_cases'].shift(208, axis = 0)
+
+iq['month'] = pd.DatetimeIndex(iq['week_start_date']).month
+iq['month_sin'] = np.sin((2 * np.pi * iq['month'])/12)
+iq['month_cos'] = np.cos((2 * np.pi * iq['month'])/12)
 
 
-iq_train['week'] = int(iq_train.index.week[0])
-iq_train["week_sin"] = np.sin(iq_train['week']/(52 * 2 * np.pi))
-iq_train["week_cos"] = np.cos(iq_train['week']/(52 * 2 * np.pi))
+iq['week'] = pd.DatetimeIndex(iq['week_start_date']).week
+iq["week_sin"] = np.sin((2 * np.pi * iq['week'])/52)
+iq["week_cos"] = np.cos((2 * np.pi * iq['week'])/52)
 
-iq_train.drop(['month','week'],axis=1, inplace = True)
+iq.drop(['month','week'],axis=1, inplace = True)
 
-submission = pd.read_csv("../data-processed/submission_format (1).csv",
+
+sj.dropna(inplace=True)
+iq.dropna(inplace=True)
+
+sj_train = sj[:-260]
+sjTest = sj[-260:]
+
+iq_train=iq[:-156]
+iqTest = iq[-156:]
+
+sjTest.drop(['total_cases', 'week_start_date',], axis = 1, inplace=True)
+iqTest.drop(['total_cases', 'week_start_date',], axis = 1, inplace=True)
+
+submission = pd.read_csv("../submission_format (1).csv",
                          index_col=[0, 1, 2])
+submissionSJ = submission.loc['sj']
+submissionIQ = submission.loc['iq']
+
+
 
 sj_train_exog = sj_train.drop(['total_cases', 'week_start_date',], axis = 1)
-iq_train_exog = iq_train.drop(['total_cases', 'week_start_date'])
+iq_train_exog = iq_train.drop(['total_cases', 'week_start_date'], axis = 1)
+
+sj_train_exog.to_csv('sj_train_exog.csv')
+sjTest.to_csv('sjTest.csv')
+filename = 'modelSJ.sav'
+
+model = SARIMAX(sj_train['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_exog)
+
+model_fitted = model.fit()
+
+pickle.dump(model_fitted, open(filename, 'wb'))
+#model = pickle.load(open(filename, 'rb'))
+predictions = model_fitted.predict(start = len(sj_train), end = len(sj_train)+len(sjTest)-1, exog=sjTest,dynamic=False)
+predictions.to_csv('predictionsSJ.csv')
+submissionSJ['total_cases'] = predictions
+
+submissionSJ.to_csv('submissionSJ.csv')
+
+model = SARIMAX(iq_train['total_cases'], order=(1, 0, 2), seasonal_order=(2, 0, 1, 52), exog=iq_train_exog)
+model_fitted = model.fit()
+predictions = model_fitted.predict(start = len(iq_train), end = len(iq_train)+len(iqTest)-1, exog=iqTest,dynamic=False)
+predictions.to_csv('predictionsIQ')
+submissionIQ['total_cases'] = predictions
+submissionIQ.to_csv('submissionIQ.csv')
+
+finalSubmission = submissionSJ.append(submissionIQ)
+
+finalSubmission.to_csv('finalSubmission.csv')

@@ -30,14 +30,4 @@ sj_train, iq_train = preprocess_data('/dengue_features_train.csv',
 sj_train_subtrain = sj_train.head(800)
 sj_train_subtest = sj_train.tail(sj_train.shape[0] - 800)
 
-model = torch.nn.LSTM(input_size=1, hidden_size=10, num_layers=2)
 
-
-loss_fn = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters())
-
-forecaster = Model(model, loss_fn, optimizer)
-
-
-
-forecaster.fit(train_data, epochs=100)
