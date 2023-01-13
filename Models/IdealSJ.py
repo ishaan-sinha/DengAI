@@ -88,6 +88,8 @@ sj_train_subtrain_exog = sj_train_subtrain.drop(['total_cases', 'week_start_date
 print(sj_train_subtrain_exog.index)
 sj_train_subtest_exog = sj_train_subtest.drop(['total_cases', 'week_start_date'], axis = 1)
 
+sj_train.to_csv('SJData.csv')
+
 '''
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()

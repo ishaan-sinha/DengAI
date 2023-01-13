@@ -136,7 +136,7 @@ iq_train_exog = iq_train.drop(['total_cases', 'week_start_date'], axis = 1)
 sj_train_exog.to_csv('sj_train_exog.csv')
 sjTest.to_csv('sjTest.csv')
 filename = 'modelSJ.sav'
-
+'''
 model = SARIMAX(sj_train['total_cases'], order=(2, 0, 2), seasonal_order=(1, 0, 1, 52), exog=sj_train_exog)
 
 model_fitted = model.fit()
@@ -148,11 +148,11 @@ predictions.to_csv('predictionsSJ.csv')
 submissionSJ['total_cases'] = predictions
 
 submissionSJ.to_csv('submissionSJ.csv')
-
+'''
 model = SARIMAX(iq_train['total_cases'], order=(1, 0, 2), seasonal_order=(2, 0, 1, 52), exog=iq_train_exog)
 model_fitted = model.fit()
 predictions = model_fitted.predict(start = len(iq_train), end = len(iq_train)+len(iqTest)-1, exog=iqTest,dynamic=False)
-predictions.to_csv('predictionsIQ')
+predictions.to_csv('predictionsIQ.csv')
 submissionIQ['total_cases'] = predictions
 submissionIQ.to_csv('submissionIQ.csv')
 

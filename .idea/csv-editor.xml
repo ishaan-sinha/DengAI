@@ -59,6 +59,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/Models/predictionsIQ.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/Models/predictionsSJ.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/Models/sj.csv">
           <value>
             <Attribute>
@@ -81,6 +95,34 @@
           </value>
         </entry>
         <entry key="/Models/submissionSJ.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/PyTorch/compare.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/PyTorch/compare_df.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/PyTorch/subtrain.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/SJData.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
