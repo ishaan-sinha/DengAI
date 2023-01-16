@@ -17,6 +17,9 @@ sjData.to_csv('fullSJData.csv')
 testDataSize = 139
 train_data = sjData[:-testDataSize] #800
 test_data = sjData[-testDataSize:] #139
+#print(len(train_data))
+#print(train_data['total_cases'][52])
+#print(train_data.columns.get_loc('total_cases'))
 
 from sklearn.preprocessing import MinMaxScaler
 
@@ -37,14 +40,14 @@ def create_inout_sequences(input_data, tw):
     for i in range(L-tw):
         train_seq = input_data[i:i+tw]
         #train_label = input_data[i+tw:i+tw+1]
-        train_label = torch.FloatTensor(train_data.at[i+tw, 'total_cases'])
-        print(train_label)
+        #train_label = torch.tensor(train_data['total_cases'][i+tw])
+        train_label = torch.tensor(train_data_normalized[i+tw][20])
         inout_seq.append((train_seq ,train_label))
     return inout_seq
 
 train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
-'''
+
 class LSTM(nn.Module):
     def __init__(self, input_size=1, hidden_layer_size=100, output_size=1):
         super().__init__()
@@ -62,11 +65,11 @@ class LSTM(nn.Module):
         predictions = self.linear(lstm_out.view(len(input_seq), -1))
         return predictions[-1]
 
-model = LSTM()
+model = LSTM(input_size=26)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-epochs = 200
+epochs = 0
 
 for i in range(epochs):
     for seq, labels in train_inout_seq:
@@ -82,10 +85,10 @@ for i in range(epochs):
         single_loss.backward()
         optimizer.step()
 
-    if i%20 == 0:
-        print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
+    #if i%20 == 0:
+        #print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
 
-print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
+#print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
 
 fut_pred = 139
 test_inputs = train_data_normalized[-train_window:].tolist()
@@ -99,11 +102,14 @@ for i in range(fut_pred):
                         torch.zeros(1, 1, model.hidden_layer_size))
         test_inputs.append(model(seq).item())
 
+
 actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:] ).reshape(-1, 1))
 
 actual_predictions = actual_predictions[:, 0]
+print(actual_predictions)
 
-pd.DataFrame(actual_predictions).to_csv('LSTM2-SJ predictions- 200 epoch')
+'''
+pd.DataFrame(actual_predictions).to_csv('LSTMX-SJ predictions- 2 epochs')
 
 print(mean_squared_error(actual_predictions, test_data['total_cases'], squared=False))
 print(mean_absolute_error(actual_predictions, test_data['total_cases']))
