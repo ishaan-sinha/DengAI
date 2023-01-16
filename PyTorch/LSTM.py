@@ -51,7 +51,7 @@ class LSTM(nn.Module):
     """
     input_size - will be 1 in this example since we have only 1 predictor (a sequence of previous values)
     hidden_size - Can be chosen to dictate how much hidden "long term memory" the network will have
-    output_size - This will be equal to the prediciton_periods input to get_x_y_pairs
+    output_size - This will be equal to the prediction_periods input to get_x_y_pairs
     """
 
     def __init__(self, input_size, hidden_size, output_size):
