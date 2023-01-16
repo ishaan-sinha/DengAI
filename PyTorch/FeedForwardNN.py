@@ -110,7 +110,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('SJ-FeedForwardNN')
+#plt.savefig('SJ-FeedForwardNN')
 
 from sklearn.metrics import r2_score
 
