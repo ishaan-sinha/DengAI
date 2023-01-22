@@ -13,14 +13,14 @@ sj_subtrain = sjData.head(800).dropna()
 
 target = torch.tensor(sj_subtrain['total_cases'].values.astype(np.float32))
 features = torch.tensor(sj_subtrain.drop(['total_cases'], axis = 1).values.astype(np.float32))
-target = target.type(torch.FloatTensor)
+target = target.type(torch.LongTensor)
 
 train = torch.utils.data.TensorDataset(features, target)
 
 sj_subtest = sjData.tail(sjData.shape[0] - 800)
 testTarget = torch.tensor(sj_subtest['total_cases'].values.astype(np.float32))
 featuresTest = torch.tensor(sj_subtest.drop(['total_cases'], axis = 1).values.astype(np.float32))
-testTarget = testTarget.type(torch.FloatTensor)
+testTarget = testTarget.type(torch.LongTensor)
 
 test = torch.utils.data.TensorDataset(featuresTest, testTarget)
 
@@ -28,10 +28,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu' )
 
 input_size = 25 #25 input features
 hidden_size = 100
-output_size = 1
-
-num_epochs = 10
-batch_size = 16
+num_classes = 400
+num_epochs = 100
+batch_size = 32
 learning_rate = 0.001
 
 #Load the data
@@ -46,26 +45,29 @@ samples, labels = examples.next()
 #print(samples.shape, labels.shape)
 
 class NeuralNet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, num_classes):
         super(NeuralNet, self).__init__()
         self.l1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
         self.l2 = nn.Linear(hidden_size, hidden_size)
         self.relu = nn.ReLU()
-        self.l_out = nn.Linear(hidden_size, output_size)
-        #self.l_out
+        self.l3 = nn.Linear(hidden_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.l_out = nn.Linear(hidden_size, num_classes)
     def forward(self, x):
         out = self.l1(x)
         out = self.relu(out)
         out = self.l2(out)
         out = self.relu(out)
+        out = self.l3(out)
+        out = self.relu(out)
         out = self.l_out(out)
         return out
 
-model = NeuralNet(input_size, hidden_size, output_size)
+model = NeuralNet(input_size, hidden_size, num_classes)
 
 #loss and optimizer
-criterion = nn.MSELoss() #Squared euclidean distance, L2 norm
+criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
 
 n_total_steps = len(train_loader)
@@ -88,22 +90,22 @@ for epoch in range(num_epochs):
             print (f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{n_total_steps}], Loss: {loss.item():.4f}')
 
 #testing loop
-model.eval()
 results = [] #(predicted, actual)
 with torch.no_grad():
-
+    n_correct = 0
+    n_samples = 0
     for featureValues, labels in test_loader:
         labels = labels.to(device)
         outputs = model(featureValues)
 
         #value, index
         _, predictions = torch.max(outputs, 1)
-        #n_samples += labels.shape[0]
-        #n_correct += (predictions==labels).sum().item()
+        n_samples += labels.shape[0]
+        n_correct += (predictions==labels).sum().item()
         for i in range(len(predictions)):
             results.append((predictions[i], labels[i]))
-    #Mape, Rmse, r^2
-    #print(f'Accuracy of the network on the test times: {acc} %')
+    acc = 100.0 * n_correct / n_samples
+    print(f'Accuracy of the network on the test times: {acc} %')
 
 compare_df = pd.DataFrame(index = sj_subtest.index, columns=['predicted', 'actual'])
 compare_df['predicted'] = [int(x[0]) for x in results]
@@ -121,6 +123,7 @@ plt.show()
 
 from sklearn.metrics import r2_score
 
+compare_df.to_csv('compare.csv')
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
