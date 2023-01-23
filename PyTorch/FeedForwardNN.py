@@ -26,7 +26,8 @@ input_size = 25 #25 input features
 hidden_size = 100
 output_size = 1
 
-num_epochs = 300
+#num_epochs = 263 #Fine tuned
+num_epochs = 600
 batch_size = 16
 learning_rate = 0.001
 #Load the data
@@ -45,7 +46,7 @@ class NeuralNet(nn.Module):
         self.l2 = nn.Linear(hidden_size, hidden_size)
         self.relu = nn.ReLU()
         self.l3 = nn.Linear(hidden_size, hidden_size)
-        self.relu = nn.ReLU
+        self.relu = nn.ReLU()
         self.l_out = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -114,7 +115,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('SJ-FeedForwardNN-270epochs')
+#plt.savefig('SJ-FeedForwardNN-263epochs-4Layers')
 plt.show()
 
 from sklearn.metrics import r2_score
@@ -124,7 +125,7 @@ print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
 
 plt.plot(valid_losses)
-plt.savefig("SJ-FeedForwardNN-4 Layers - Validation Loss")
+plt.savefig("SJ-FeedForwardNN-4 Layers - Validation Loss - 600epochs")
 plt.show()
 
 print(min(valid_losses), valid_losses.index(min(valid_losses)))

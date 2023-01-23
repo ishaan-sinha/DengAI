@@ -27,39 +27,26 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu' )
 
 
 def get_x_y_pairs(train_scaled, train_periods, prediction_periods):
-    """
-    train_scaled - training sequence
-    train_periods - How many data points to use as inputs
-    prediction_periods - How many periods to ouput as predictions
-    """
+
     x_train = [train_scaled[i:i + train_periods] for i in range(len(train_scaled) - train_periods - prediction_periods)]
     y_train = [train_scaled[i + train_periods:i + train_periods + prediction_periods] for i in
                range(len(train_scaled) - train_periods - prediction_periods)]
-    # -- use the stack function to convert the list of 1D tensors
-    # into a 2D tensor where each element of the list is now a row
+
     x_train = torch.stack(x_train)
     y_train = torch.stack(y_train)
 
     return x_train, y_train
 
-train_periods = 261
+train_periods = 365
 test_periods = 139
 prediction_periods = test_periods
 x_train, y_train = get_x_y_pairs(train_scaled, train_periods, prediction_periods)
 
 class LSTM(nn.Module):
-    """
-    input_size - will be 1 in this example since we have only 1 predictor (a sequence of previous values)
-    hidden_size - Can be chosen to dictate how much hidden "long term memory" the network will have
-    output_size - This will be equal to the prediction_periods input to get_x_y_pairs
-    """
-
     def __init__(self, input_size, hidden_size, output_size):
         super(LSTM, self).__init__()
         self.hidden_size = hidden_size
-
         self.lstm = nn.LSTM(input_size, hidden_size)
-
         self.linear = nn.Linear(hidden_size, output_size)
 
     def forward(self, x, hidden=None):
@@ -76,7 +63,7 @@ class LSTM(nn.Module):
 
         return predictions[-1], self.hidden
 
-model = LSTM(input_size=1, hidden_size=50, output_size=test_periods)
+model = LSTM(input_size=1, hidden_size=20, output_size=test_periods)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -102,7 +89,6 @@ model.eval()
 with torch.no_grad():
     predictions, _ = model(train_scaled[-train_periods:], None)
 
-#-- Apply inverse transform to undo scaling
 predictions = scaler.inverse_transform(np.array(predictions.reshape(-1,1)))
 print(predictions)
 
@@ -111,9 +97,7 @@ x = [dt.datetime.date(d) for d in sjData.index]
 fig = plt.figure(figsize=(10,5))
 plt.title('Dengue Cases')
 plt.grid(True)
-plt.plot(x[:-len(predictions)],
-         sjData.total_cases[:-len(predictions)],
-         "b-")
+
 plt.plot(x[-len(predictions):],
          sjData.total_cases[-len(predictions):],
          "b--",
@@ -123,7 +107,7 @@ plt.plot(x[-len(predictions):],
          "r-",
          label='Predicted Values')
 plt.legend()
-#plt.savefig('LSTM(261->139), 21epochs')
+plt.savefig('LSTM(365->139), 10epochs, 2 layers')
 plt.show()
 
 
