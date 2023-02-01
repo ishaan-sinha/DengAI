@@ -38,6 +38,7 @@ def get_x_y_pairs(train_scaled, train_periods, prediction_periods):
 
 x_train, y_train = get_x_y_pairs(train_data_normalized, train_window, 1)
 
+
 class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(LSTM, self).__init__()

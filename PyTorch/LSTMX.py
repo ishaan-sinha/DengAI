@@ -11,6 +11,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu' )
 
 
 sjData = pd.read_csv("../SJData.csv", index_col=[1]).drop('Unnamed: 0', axis = 1).dropna()
+move_column = sjData.pop("total_cases")
+sjData.insert(0, "total_cases", move_column)
+
 sjData.index = pd.to_datetime(sjData.index)
 #print(sjData.columns) #679x26
 testDataSize = 139
@@ -35,60 +38,68 @@ def create_inout_sequences(input_data, tw):
     L = len(input_data)
     for i in range(L-tw-1):
         train_seq = input_data[i:i+tw]
-        train_label = saved[i+tw+1][20]
-        inout_seq.append((train_seq, train_label))
+        train_seq = [input_data[j] for j in range(i, i+tw)]
+        x_train = torch.stack(train_seq)
+        train_label = (torch.tensor(saved[i+tw][0])).type('torch.FloatTensor')
+        inout_seq.append((x_train, train_label))
     return inout_seq
 
 train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size=1, hidden_layer_size=100, output_size=1):
-        super().__init__()
-        self.hidden_layer_size = hidden_layer_size
+    def __init__(self, input_size, hidden_size, output_size):
+        super(LSTM, self).__init__()
+        self.hidden_size = hidden_size
+        self.lstm = nn.LSTM(input_size, hidden_size)
+        self.linear = nn.Linear(hidden_size, output_size)
+    def forward(self, x, hidden=None):
+        if hidden == None:
+            self.hidden = (torch.zeros(1, 1, self.hidden_size),
+                           torch.zeros(1, 1, self.hidden_size))
+        else:
+            self.hidden = hidden
+        lstm_out, self.hidden = self.lstm(x.view(len(x), 1, -1),
+                                          self.hidden)
+        predictions = self.linear(lstm_out.view(len(x), -1))
+        return predictions[-1], self.hidden
 
-        self.lstm = nn.LSTM(input_size, hidden_layer_size)
 
-        self.linear = nn.Linear(hidden_layer_size, output_size)
-
-        self.hidden_cell = (torch.zeros(1,1,self.hidden_layer_size),
-                            torch.zeros(1,1,self.hidden_layer_size))
-
-    def forward(self, input_seq):
-        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq) ,1, -1), self.hidden_cell)
-        predictions = self.linear(lstm_out.view(len(input_seq), -1))
-        return predictions[-1]
-
-
-model = LSTM(input_size=26)
+model = LSTM(input_size=26, hidden_size=20, output_size=1)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-epochs = 3
+epochs = 0
+
+model.train()
 
 for i in range(epochs):
     for seq, labels in train_inout_seq:
         seq.to(device)
         labels.to(device)
         optimizer.zero_grad()
-        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
-                        torch.zeros(1, 1, model.hidden_layer_size))
+        model.hidden_cell = (torch.zeros(1, 1, model.hidden_size),
+                        torch.zeros(1, 1, model.hidden_size))
 
-        y_pred = model(seq)
+        y_pred, _ = model(seq, None)
 
         single_loss = loss_function(y_pred, labels)
         single_loss.backward()
         optimizer.step()
 
-    #if i%20 == 0:
-        #print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
+    if i%1 == 0:
+        print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
 
-#print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
-'''
+
 fut_pred = 139
 test_inputs = train_data_normalized[-train_window:].tolist()
 
 model.eval()
 
+
+test_inputs = np.delete(saved, 0, axis = 1)
+print(test_inputs.shape)
+
+'''
 for i in range(fut_pred):
     seq = torch.FloatTensor(test_inputs[-train_window:])
     with torch.no_grad():
