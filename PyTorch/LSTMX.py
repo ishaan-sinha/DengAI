@@ -27,6 +27,8 @@ from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(-1, 1))
 
 train_data_normalized = scaler.fit_transform(train_data)
+test_data_normalized = scaler.fit_transform(test_data.drop('total_cases', axis = 1))
+
 saved = train_data_normalized.copy()
 
 train_data_normalized = torch.FloatTensor(train_data_normalized)
@@ -37,7 +39,7 @@ def create_inout_sequences(input_data, tw):
     inout_seq = []
     L = len(input_data)
     for i in range(L-tw-1):
-        train_seq = input_data[i:i+tw]
+        #train_seq = input_data[i:i+tw]
         train_seq = [input_data[j] for j in range(i, i+tw)]
         x_train = torch.stack(train_seq)
         train_label = (torch.tensor(saved[i+tw][0])).type('torch.FloatTensor')
@@ -91,23 +93,29 @@ for i in range(epochs):
 
 
 fut_pred = 139
-test_inputs = train_data_normalized[-train_window:].tolist()
+
 
 model.eval()
 
+test_inputs = train_data_normalized[-train_window:]
 
-test_inputs = np.delete(saved, 0, axis = 1)
-print(test_inputs.shape)
+print(type(test_data_normalized[1]))
+print(test_data_normalized[1])
 
-'''
 for i in range(fut_pred):
     seq = torch.FloatTensor(test_inputs[-train_window:])
     with torch.no_grad():
-        model.hidden = (torch.zeros(1, 1, model.hidden_layer_size),
-                        torch.zeros(1, 1, model.hidden_layer_size))
-        test_inputs.append(model(seq).item())
+        train_seq = [test_inputs[j] for j in range(i, i + train_window)]
+        x_train = torch.stack(train_seq)
+        model.hidden = (torch.zeros(1, 1, model.hidden_size),
+                        torch.zeros(1, 1, model.hidden_size))
+        y_hat, _ = model(x_train, None)
+        original = test_data_normalized[i]
+        toAdd = np.insert(original, 0, y_hat)
+        toAdd = torch.FloatTensor(toAdd)
+        test_inputs = torch.cat([test_inputs, toAdd])
 
-
+'''
 actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:]).reshape(-1, 1))
 
 actual_predictions = actual_predictions[:, 0]
