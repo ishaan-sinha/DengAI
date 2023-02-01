@@ -34,6 +34,7 @@ learning_rate = 0.001
 train = data_utils.TensorDataset(torch.tensor(train_data.values.astype(np.float32)), torch.tensor(train_labels.values.astype(np.float32)))
 test = data_utils.TensorDataset(torch.tensor(test_data.values.astype(np.float32)), torch.tensor(test_labels.values.astype(np.float32)))
 validate = data_utils.TensorDataset(torch.tensor(validate_data.values.astype(np.float32)), torch.tensor(validate_labels.values.astype(np.float32)))
+
 train_loader = torch.utils.data.DataLoader(dataset = train, batch_size = batch_size)
 test_loader = torch.utils.data.DataLoader(dataset = test, batch_size = batch_size)
 validate_loader = torch.utils.data.DataLoader(dataset = validate, batch_size = batch_size)
@@ -68,7 +69,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
 n_total_steps = len(train_loader)
 valid_losses = []
 for epoch in range(num_epochs):
+    model.train()
     for i,(featureValues, labels) in enumerate(train_loader):
+
         featureValues = featureValues.to(device)
         labels = labels.to(device)
 
@@ -81,13 +84,13 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-        valid_loss = 0.0
-        model.eval()
-        for data, labels in validate_loader:
-            data, labels = data.to(device), labels.to(device)
-            target = model(data)
-            loss = criterion(target, labels)
-            valid_loss += loss.item()
+    valid_loss = 0.0
+    model.eval()
+    for data, labels in validate_loader:
+        data, labels = data.to(device), labels.to(device)
+        target = model(data)
+        loss = criterion(target, labels)
+        valid_loss += loss.item()
     valid_losses.append(valid_loss)
     if(epoch%10 == 0):
         print(epoch)

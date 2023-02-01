@@ -109,7 +109,7 @@ plt.plot(x[-len(predictions):],
          "r-",
          label='Predicted Values')
 plt.legend()
-plt.savefig('LSTM(156->139), 20epochs, 2 layers')
+plt.savefig('LSTM(156->139), 20epochs, 1 layers')
 plt.show()
 
 
