@@ -27,7 +27,8 @@ from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(-1, 1))
 
 train_data_normalized = scaler.fit_transform(train_data)
-test_data_normalized = scaler.fit_transform(test_data.drop('total_cases', axis = 1))
+test_data_normalized = scaler.transform(test_data)
+test_data_normalized = np.delete(test_data_normalized, 0, 1)
 
 saved = train_data_normalized.copy()
 
@@ -70,7 +71,7 @@ model = LSTM(input_size=26, hidden_size=20, output_size=1)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-epochs = 0
+epochs = 200
 
 model.train()
 
@@ -99,8 +100,6 @@ model.eval()
 
 test_inputs = train_data_normalized[-train_window:]
 
-print(type(test_data_normalized[1]))
-print(test_data_normalized[1])
 
 for i in range(fut_pred):
     seq = torch.FloatTensor(test_inputs[-train_window:])
@@ -113,18 +112,18 @@ for i in range(fut_pred):
         original = test_data_normalized[i]
         toAdd = np.insert(original, 0, y_hat)
         toAdd = torch.FloatTensor(toAdd)
+        toAdd = torch.unsqueeze(toAdd, 0)
         test_inputs = torch.cat([test_inputs, toAdd])
 
-'''
-actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:]).reshape(-1, 1))
+actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:]))
+
 
 actual_predictions = actual_predictions[:, 0]
 print(actual_predictions)
 
 
-pd.DataFrame(actual_predictions).to_csv('LSTMX-SJ predictions- 2 epochs')
+pd.DataFrame(actual_predictions).to_csv('LSTMX-SJ predictions- 200 epoch')
 
 print(mean_squared_error(actual_predictions, test_data['total_cases'], squared=False))
 print(mean_absolute_error(actual_predictions, test_data['total_cases']))
 print(r2_score(actual_predictions, test_data['total_cases']))
-'''
