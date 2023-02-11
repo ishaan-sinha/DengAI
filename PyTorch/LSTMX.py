@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 
@@ -15,14 +16,11 @@ move_column = sjData.pop("total_cases")
 sjData.insert(0, "total_cases", move_column)
 
 sjData.index = pd.to_datetime(sjData.index)
-#print(sjData.columns) #679x26
+
 testDataSize = 139
-train_data = sjData[:-testDataSize]
-test_data = sjData[-testDataSize:] #139
+train = sjData[:-testDataSize]
+test = sjData[-testDataSize:] #139
 
-#print(sjData.columns.get_loc("total_cases")) 20th column
-
-from sklearn.preprocessing import MinMaxScaler
 
 scaler = MinMaxScaler(feature_range=(-1, 1))
 
@@ -34,7 +32,7 @@ saved = train_data_normalized.copy()
 
 train_data_normalized = torch.FloatTensor(train_data_normalized)
 
-train_window = 52
+train_window = 12
 
 def create_inout_sequences(input_data, tw):
     inout_seq = []
@@ -49,22 +47,26 @@ def create_inout_sequences(input_data, tw):
 
 train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
+batch_size = 1
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, w=12, nl = 2):
         super(LSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size)
-        self.linear = nn.Linear(hidden_size, output_size)
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True, num_layers= nl)
+        #Add Relu
+        self.linear = nn.Linear(w*hidden_size, output_size)
     def forward(self, x, hidden=None):
         if hidden == None:
             self.hidden = (torch.zeros(1, 1, self.hidden_size),
                            torch.zeros(1, 1, self.hidden_size))
         else:
             self.hidden = hidden
-        lstm_out, self.hidden = self.lstm(x.view(len(x), 1, -1),
+        lstm_out, self.hidden = self.lstm(x.view(batch_size, len(x), -1),
                                           self.hidden)
-        predictions = self.linear(lstm_out.view(len(x), -1))
-        return predictions[-1], self.hidden
+        print(lstm_out.view(len(x), -1).size())
+        predictions = self.linear(lstm_out.view(lstm_out.size(0), lstm_out.size(1)*lstm_out.size(2)))
+        print(predictions.size())
+        return predictions, self.hidden
 
 
 model = LSTM(input_size=26, hidden_size=20, output_size=1)
