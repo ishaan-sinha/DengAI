@@ -22,10 +22,12 @@ train = sjData[:-testDataSize]
 test = sjData[-testDataSize:] #139
 
 
+from sklearn.preprocessing import MinMaxScaler
+
 scaler = MinMaxScaler(feature_range=(-1, 1))
 
-train_data_normalized = scaler.fit_transform(train_data)
-test_data_normalized = scaler.transform(test_data)
+train_data_normalized = scaler.fit_transform(train)
+test_data_normalized = scaler.transform(test)
 test_data_normalized = np.delete(test_data_normalized, 0, 1)
 
 saved = train_data_normalized.copy()

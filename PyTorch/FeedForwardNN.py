@@ -17,8 +17,8 @@ sj_train = sj_train.head(len(sj_train)-100)
 train_data = sj_train.drop(['total_cases'], axis = 1)
 train_labels = sj_train.loc[:,['total_cases']]
 sj_test = sjData.tail(sjData.shape[0] - 800)
-test_data = sj_test.drop(['total_cases'], axis = 1)
-test_labels = sj_test.loc[:,['total_cases']]
+train_data = sj_train.drop(['total_cases'], axis = 1)
+train_labels = sj_train.loc[:,['total_cases']]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu' )
 
