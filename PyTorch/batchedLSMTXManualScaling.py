@@ -18,14 +18,20 @@ sjData.index = pd.to_datetime(sjData.index)
 
 testDataSize = 139
 
-from sklearn.preprocessing import MinMaxScaler
-
 sj_train = sjData[:-testDataSize]
-scaler = MinMaxScaler()
-sj_train = pd.DataFrame(scaler.fit_transform(sj_train.to_numpy()), columns=sj_train.columns)
+
+target = 'total_cases'
+target_mean = sj_train[target].mean()
+target_stdev = sj_train[target].std()
 
 sj_test = sjData[-testDataSize:] #139
-sj_test = pd.DataFrame(scaler.transform(sj_train.to_numpy()), columns=sj_train.columns)
+
+for c in sj_train.columns:
+    mean = sj_train[c].mean()
+    stdev = sj_train[c].std()
+
+    sj_train[c] = (sj_train[c] - mean) / stdev
+    sj_test[c] = (sj_test[c] - mean) / stdev
 
 class SequenceDataset(Dataset):
     def __init__(self, dataframe, target, sequence_length=5):
@@ -94,15 +100,14 @@ class LSTM(nn.Module):
 
     def forward(self, x):
         batch_size = x.shape[0]
-        #h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-        #c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-       # _, (hn, _) = self.lstm(x, (h0, c0))
-        _, (hn, _) = self.lstm(x)
+        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
+        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
+        _, (hn, _) = self.lstm(x, (h0, c0))
         hn = self.relu(hn)
         out = self.linear(hn[0]).reshape(batch_size, 4)  # First dim of Hn is num_layers, which is set to 1 above.
         return out
 
-learning_rate = .001
+learning_rate = .002
 hidden_size = 100
 
 model = LSTM(num_features= len(sjData.axes[1]) - 1, hidden_size=hidden_size, output_size=4)
@@ -145,7 +150,7 @@ print("Untrained test\n--------")
 test_model(test_loader, model, loss_function)
 print()
 
-epochs = 50
+epochs = 200
 
 for ix_epoch in range(epochs):
     if(ix_epoch%10 == 0):
@@ -160,7 +165,7 @@ with torch.no_grad():
     for X, y in test_loader:
         output = model(X)
         for i in range(len(output)):
-            results.append((output[i][0], y[i][0]))
+            results.append((output[i][0]*target_stdev+target_mean, y[i][0]*target_stdev + target_mean))
 compare_df = pd.DataFrame(index = sj_test.index, columns=['predicted', 'actual'])
 compare_df['predicted'] = [int(x[0]) for x in results]
 compare_df['actual'] = [int(x[1]) for x in results]

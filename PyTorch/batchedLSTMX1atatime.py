@@ -18,39 +18,44 @@ sjData.index = pd.to_datetime(sjData.index)
 
 testDataSize = 139
 
-from sklearn.preprocessing import MinMaxScaler
-
 sj_train = sjData[:-testDataSize]
-scaler = MinMaxScaler()
-sj_train = pd.DataFrame(scaler.fit_transform(sj_train.to_numpy()), columns=sj_train.columns)
+
+target = 'total_cases'
+target_mean = sj_train[target].mean()
+target_stdev = sj_train[target].std()
 
 sj_test = sjData[-testDataSize:] #139
-sj_test = pd.DataFrame(scaler.transform(sj_train.to_numpy()), columns=sj_train.columns)
+
+for c in sj_train.columns:
+    mean = sj_train[c].mean()
+    stdev = sj_train[c].std()
+
+    sj_train[c] = (sj_train[c] - mean) / stdev
+    sj_test[c] = (sj_test[c] - mean) / stdev
+
+import torch
+from torch.utils.data import Dataset
 
 class SequenceDataset(Dataset):
     def __init__(self, dataframe, target, sequence_length=5):
         self.target = target
         self.sequence_length = sequence_length
-        to_get = dataframe[target].values
-        to_get = np.append(to_get, [to_get[-1], to_get[-1], to_get[-1], to_get[-1]])
-        self.y = torch.tensor(to_get).float()
+        self.y = torch.tensor(dataframe[target].values).float()
         self.X = torch.tensor(dataframe.loc[:, dataframe.columns != target].values).float()
 
     def __len__(self):
         return self.X.shape[0]
 
     def __getitem__(self, i):
-
         if i >= self.sequence_length - 1:
             i_start = i - self.sequence_length + 1
             x = self.X[i_start:(i + 1), :]
-
         else:
             padding = self.X[0].repeat(self.sequence_length - i - 1, 1)
             x = self.X[0:(i + 1), :]
             x = torch.cat((padding, x), 0)
 
-        return x, self.y[i:i+4]
+        return x, self.y[i]
 
 sequence_length = 8
 batch_size = 16
@@ -73,39 +78,41 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 X, y = next(iter(train_loader))
 
 #print("Features shape:", X.shape) #[16, 8, 25]
-#print("Target shape:", y.shape) #[16, 4]
+#print("Target shape:", y.shape) #[16]
 
-class LSTM(nn.Module):
-    def __init__(self, num_features, hidden_size, output_size):
+from torch import nn
+
+
+class ShallowRegressionLSTM(nn.Module):
+    def __init__(self, num_sensors, hidden_units):
         super().__init__()
-        self.num_features = num_features  # this is the number of features
-        self.hidden_size = hidden_size
+        self.num_sensors = num_sensors  # this is the number of features
+        self.hidden_units = hidden_units
         self.num_layers = 2
-        self.output_size = output_size
 
         self.lstm = nn.LSTM(
-            input_size=num_features,
-            hidden_size=hidden_size,
+            input_size=num_sensors,
+            hidden_size=hidden_units,
             batch_first=True,
             num_layers=self.num_layers
         )
-        self.relu = nn.ReLU()
-        self.linear = nn.Linear(self.hidden_size, output_size)
+
+        self.linear = nn.Linear(in_features=self.hidden_units, out_features=1)
 
     def forward(self, x):
         batch_size = x.shape[0]
-        #h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-        #c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-       # _, (hn, _) = self.lstm(x, (h0, c0))
-        _, (hn, _) = self.lstm(x)
-        hn = self.relu(hn)
-        out = self.linear(hn[0]).reshape(batch_size, 4)  # First dim of Hn is num_layers, which is set to 1 above.
+        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_()
+        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_()
+
+        _, (hn, _) = self.lstm(x, (h0, c0))
+        out = self.linear(hn[0]).flatten()  # First dim of Hn is num_layers, which is set to 1 above.
+
         return out
 
-learning_rate = .001
-hidden_size = 100
+learning_rate = .0005
+num_hidden_units = 100
 
-model = LSTM(num_features= len(sjData.axes[1]) - 1, hidden_size=hidden_size, output_size=4)
+model = ShallowRegressionLSTM(num_sensors=len(sjData.axes[1]) - 1, hidden_units=num_hidden_units)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -122,6 +129,7 @@ def train_model(data_loader, model, loss_function, optimizer):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
         total_loss += loss.item()
 
     avg_loss = total_loss / num_batches
@@ -141,11 +149,12 @@ def test_model(data_loader, model, loss_function):
     avg_loss = total_loss / num_batches
     print(f"Test loss: {avg_loss}")
 
+
 print("Untrained test\n--------")
 test_model(test_loader, model, loss_function)
 print()
 
-epochs = 50
+epochs = 200
 
 for ix_epoch in range(epochs):
     if(ix_epoch%10 == 0):
@@ -160,7 +169,7 @@ with torch.no_grad():
     for X, y in test_loader:
         output = model(X)
         for i in range(len(output)):
-            results.append((output[i][0], y[i][0]))
+            results.append((output[i]*target_stdev+target_mean, y[i]*target_stdev + target_mean))
 compare_df = pd.DataFrame(index = sj_test.index, columns=['predicted', 'actual'])
 compare_df['predicted'] = [int(x[0]) for x in results]
 compare_df['actual'] = [int(x[1]) for x in results]
