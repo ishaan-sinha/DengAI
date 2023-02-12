@@ -38,7 +38,7 @@ def preprocess_data(data_path, labels_path=None):
     return sj, iq
 
 sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
-                                     labels_path="CSV/dengue_labels_train.csv")
+                                     labels_path="../CSV/dengue_labels_train.csv")
 
 from datetime import datetime, date, timedelta
 
@@ -60,9 +60,10 @@ sj_train['1w'] = sj_train['total_cases'].shift(1, axis = 0)
 sj_train['2w'] = sj_train['total_cases'].shift(2, axis = 0)
 sj_train['3w'] = sj_train['total_cases'].shift(3, axis = 0)
 sj_train['last3WeekAverage'] = (sj_train['1w']+sj_train['2w']+sj_train['3w'])/3
-sj_train.drop(['1w','2w','3w'], axis = 1)
+
 sj_train['diff1-2'] = sj_train['1w'] - sj_train['2w']
 sj_train['diff2-3'] = sj_train['2w'] - sj_train['3w']
+sj_train.drop(['1w','2w','3w'], axis = 1, inplace=True)
 
 sj_train['month'] = int(sj_train.index.month[0])
 sj_train['month_sin'] = np.sin(sj_train['month']/(12 * 2 * np.pi))
@@ -110,6 +111,7 @@ for i in sj_train_subtrain_exog.columns:
 print(data)
 
 '''
+print(sj_train_subtrain_exog.columns)
 
 allVal = {'ndvi_ne': (12.526534189762597, 7.930668783366727, 0.8475072291870939),
 'ndvi_nw': (12.594688998789422, 7.963501873428806, 0.8458433388994836),

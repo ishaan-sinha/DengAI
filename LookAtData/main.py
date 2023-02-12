@@ -13,10 +13,10 @@ import numpy as np
 from warnings import filterwarnings
 filterwarnings('ignore')
 
-train_features = pd.read_csv('/dengue_features_train.csv',
+train_features = pd.read_csv('../CSV/dengue_features_train.csv',
                              index_col=[0,1,2])
 
-train_labels = pd.read_csv('/dengue_labels_train.csv',
+train_labels = pd.read_csv('../CSV/dengue_labels_train.csv',
                            index_col=[0,1,2])
 
 # Seperate data for San Juan

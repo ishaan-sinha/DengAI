@@ -31,8 +31,8 @@ def preprocess_data(data_path, labels_path=None):
 
     return sj, iq
 
-sj_train, iq_train = preprocess_data('/dengue_features_train.csv',
-                                     labels_path="/CSV/dengue_labels_train.csv")
+sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
+                                     labels_path="../CSV/dengue_labels_train.csv")
 
 sj_train['date'] = pd.to_datetime(sj_train['week_start_date'])
 sj_train.set_index('date', inplace = True)
@@ -97,8 +97,9 @@ plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
 plt.savefig('AR(+' + str(best_lag)+ ').png')
 from sklearn.metrics import r2_score
-
+from sklearn.metrics import mean_absolute_percentage_error
 compare_df.dropna(inplace = True)
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
+print(mean_absolute_percentage_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))

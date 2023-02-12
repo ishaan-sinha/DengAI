@@ -51,31 +51,32 @@ train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
 batch_size = 1
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, w=12, nl = 2):
+    def __init__(self, input_size, hidden_size, output_size):
         super(LSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True, num_layers= nl)
-        #Add Relu
-        self.linear = nn.Linear(w*hidden_size, output_size)
+        self.lstm = nn.LSTM(input_size, hidden_size)
+        self.linear = nn.Linear(hidden_size, output_size)
+
     def forward(self, x, hidden=None):
         if hidden == None:
             self.hidden = (torch.zeros(1, 1, self.hidden_size),
                            torch.zeros(1, 1, self.hidden_size))
         else:
             self.hidden = hidden
-        lstm_out, self.hidden = self.lstm(x.view(batch_size, len(x), -1),
+
+        lstm_out, self.hidden = self.lstm(x.view(len(x), 1, -1),
                                           self.hidden)
-        print(lstm_out.view(len(x), -1).size())
-        predictions = self.linear(lstm_out.view(lstm_out.size(0), lstm_out.size(1)*lstm_out.size(2)))
-        print(predictions.size())
-        return predictions, self.hidden
+
+        predictions = self.linear(lstm_out.view(len(x), -1))
+
+        return predictions[-1], self.hidden
 
 
 model = LSTM(input_size=26, hidden_size=20, output_size=1)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-epochs = 200
+epochs = 100
 
 model.train()
 
@@ -123,11 +124,24 @@ actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:
 
 
 actual_predictions = actual_predictions[:, 0]
-print(actual_predictions)
 
 
-pd.DataFrame(actual_predictions).to_csv('LSTMX-SJ predictions- 200 epoch')
+#pd.DataFrame(actual_predictions).to_csv('LSTMX-SJ predictions- 200 epoch')
 
-print(mean_squared_error(actual_predictions, test_data['total_cases'], squared=False))
-print(mean_absolute_error(actual_predictions, test_data['total_cases']))
-print(r2_score(actual_predictions, test_data['total_cases']))
+print(mean_squared_error(actual_predictions, test['total_cases'], squared=False))
+print(mean_absolute_error(actual_predictions, test['total_cases']))
+print(r2_score(actual_predictions, test['total_cases']))
+
+
+compare_df = pd.DataFrame(index = test.index, columns=['predicted', 'actual'])
+compare_df['predicted'] = actual_predictions
+compare_df['actual'] = test['total_cases']
+
+plt.clf()
+figs, axes = plt.subplots(nrows=1, ncols=1)
+compare_df.actual.plot(ax=axes, label="actual")
+compare_df.predicted.plot(ax=axes, label="predicted")
+plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
+plt.legend()
+plt.savefig('LSTM1 at a time - 100epochs')
+plt.show()

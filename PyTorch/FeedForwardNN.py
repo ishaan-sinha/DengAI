@@ -17,8 +17,8 @@ sj_train = sj_train.head(len(sj_train)-100)
 train_data = sj_train.drop(['total_cases'], axis = 1)
 train_labels = sj_train.loc[:,['total_cases']]
 sj_test = sjData.tail(sjData.shape[0] - 800)
-train_data = sj_train.drop(['total_cases'], axis = 1)
-train_labels = sj_train.loc[:,['total_cases']]
+test_data = sj_test.drop(['total_cases'], axis = 1)
+test_labels = sj_test.loc[:,['total_cases']]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu' )
 
@@ -27,7 +27,7 @@ hidden_size = 100
 output_size = 1
 
 #num_epochs = 263 #Fine tuned
-num_epochs = 600
+num_epochs = 250
 batch_size = 16
 learning_rate = 0.001
 #Load the data
@@ -46,16 +46,12 @@ class NeuralNet(nn.Module):
         self.relu = nn.ReLU()
         self.l2 = nn.Linear(hidden_size, hidden_size)
         self.relu = nn.ReLU()
-        self.l3 = nn.Linear(hidden_size, hidden_size)
-        self.relu = nn.ReLU()
         self.l_out = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         out = self.l1(x)
         out = self.relu(out)
         out = self.l2(out)
-        out = self.relu(out)
-        out = self.l3(out)
         out = self.relu(out)
         out = self.l_out(out)
         return out
@@ -118,7 +114,7 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-#plt.savefig('SJ-FeedForwardNN-263epochs-4Layers')
+plt.savefig('REALSJ-FeedForwardNN-250epochs-3Layers')
 plt.show()
 
 from sklearn.metrics import r2_score
@@ -128,7 +124,7 @@ print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
 
 plt.plot(valid_losses)
-plt.savefig("SJ-FeedForwardNN-4 Layers - Validation Loss - 600epochs")
+#plt.savefig("REAL_SJ-FeedForwardNN-4 Layers - Validation Loss - 250epochs")
 plt.show()
 
 print(min(valid_losses), valid_losses.index(min(valid_losses)))

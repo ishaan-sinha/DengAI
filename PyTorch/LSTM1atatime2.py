@@ -66,7 +66,7 @@ model.to(device)
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-epoch = 2
+epoch = 100
 
 model.train()
 
@@ -101,3 +101,16 @@ pd.DataFrame(actual_predictions).to_csv('LSTM1atatime2-SJ predictions- 2 epochs'
 print(mean_squared_error(actual_predictions, test_data['total_cases'], squared=False))
 print(mean_absolute_error(actual_predictions, test_data['total_cases']))
 print(r2_score(actual_predictions, test_data['total_cases']))
+
+compare_df = pd.DataFrame(index = test_data.index, columns=['predicted', 'actual'])
+compare_df['predicted'] = actual_predictions
+compare_df['actual'] = test_data['total_cases']
+
+plt.clf()
+figs, axes = plt.subplots(nrows=1, ncols=1)
+compare_df.actual.plot(ax=axes, label="actual")
+compare_df.predicted.plot(ax=axes, label="predicted")
+plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
+plt.legend()
+#plt.savefig('LSTM1 at a time - 100epochs')
+plt.show()
