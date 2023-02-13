@@ -112,9 +112,9 @@ hidden_size = 100
 
 model = LSTM(num_features= len(sjData.axes[1]) - 1, hidden_size=hidden_size, output_size=4)
 loss_function = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-2)
 
-
+train_loss = []
 def train_model(data_loader, model, loss_function, optimizer):
     num_batches = len(data_loader)
     total_loss = 0
@@ -130,9 +130,11 @@ def train_model(data_loader, model, loss_function, optimizer):
         total_loss += loss.item()
 
     avg_loss = total_loss / num_batches
+    train_loss.append(avg_loss)
     print(f"Train loss: {avg_loss}")
 
 
+test_loss = []
 def test_model(data_loader, model, loss_function):
     num_batches = len(data_loader)
     total_loss = 0
@@ -144,41 +146,62 @@ def test_model(data_loader, model, loss_function):
             total_loss += loss_function(output, y).item()
 
     avg_loss = total_loss / num_batches
+    test_loss.append(avg_loss)
     print(f"Test loss: {avg_loss}")
 
 print("Untrained test\n--------")
 test_model(test_loader, model, loss_function)
 print()
 
-epochs = 200
+epochs = 75
 
 for ix_epoch in range(epochs):
-    if(ix_epoch%10 == 0):
-        print(f"Epoch {ix_epoch}\n---------")
-        train_model(train_loader, model, loss_function, optimizer=optimizer)
-        test_model(test_loader, model, loss_function)
-        print()
+    print(f"Epoch {ix_epoch}\n---------")
+    train_model(train_loader, model, loss_function, optimizer=optimizer)
+    test_model(test_loader, model, loss_function)
+    print()
 
 results = [] #(predicted, actual)
 model.eval()
 with torch.no_grad():
+    '''
+    for X, y in train_loader:
+        output = model(X)
+        for i in range(len(output)):
+            results.append((output[i][0]*target_stdev+target_mean, y[i][0]*target_stdev + target_mean))
+    '''
     for X, y in test_loader:
         output = model(X)
         for i in range(len(output)):
             results.append((output[i][0]*target_stdev+target_mean, y[i][0]*target_stdev + target_mean))
+
 compare_df = pd.DataFrame(index = sj_test.index, columns=['predicted', 'actual'])
 compare_df['predicted'] = [int(x[0]) for x in results]
 compare_df['actual'] = [int(x[1]) for x in results]
 
 plt.clf()
 figs, axes = plt.subplots(nrows=1, ncols=1)
-compare_df.actual.plot(ax=axes, label="actual")
-compare_df.predicted.plot(ax=axes, label="predicted")
+compare_df.actual.plot(ax=axes, label="actual", alpha = 0.4)
+compare_df.predicted.plot(ax=axes, label="predicted", alpha = 0.4)
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-#plt.savefig('BatchedLSTMX-100epochs')
+plt.savefig('TOTALBatchedLSTMX-75epochs+Weightdecay')
 plt.show()
+
+from sklearn.metrics import mean_absolute_percentage_error
 
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
+print(mean_absolute_percentage_error(compare_df['actual'], compare_df['predicted']))
+
+'''
+print(len(train_loss))
+plt.plot(train_loss)
+plt.savefig("BatchedLSTM2layer - Validation Loss - 200epochs")
+
+print(len(test_loss))
+plt.plot(test_loss)
+plt.savefig("BatchedLSTM2layer - Test Loss - 200epochs")
+'''
+#75 optimal
