@@ -94,15 +94,12 @@ class LSTM(nn.Module):
 
     def forward(self, x):
         batch_size = x.shape[0]
-        #h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-        #c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-       # _, (hn, _) = self.lstm(x, (h0, c0))
         _, (hn, _) = self.lstm(x)
         hn = self.relu(hn)
-        out = self.linear(hn[0]).reshape(batch_size, 4)  # First dim of Hn is num_layers, which is set to 1 above.
+        out = self.linear(hn[0]).reshape(batch_size, 4)
         return out
 
-learning_rate = .001
+learning_rate = .005
 hidden_size = 100
 
 model = LSTM(num_features= len(sjData.axes[1]) - 1, hidden_size=hidden_size, output_size=4)
@@ -141,18 +138,17 @@ def test_model(data_loader, model, loss_function):
     avg_loss = total_loss / num_batches
     print(f"Test loss: {avg_loss}")
 
-print("Untrained test\n--------")
+print("Untrained test\n")
 test_model(test_loader, model, loss_function)
 print()
 
-epochs = 50
+epochs = 10
 
 for ix_epoch in range(epochs):
-    if(ix_epoch%10 == 0):
-        print(f"Epoch {ix_epoch}\n---------")
-        train_model(train_loader, model, loss_function, optimizer=optimizer)
-        test_model(test_loader, model, loss_function)
-        print()
+    print(f"Epoch {ix_epoch}\n---------")
+    train_model(train_loader, model, loss_function, optimizer=optimizer)
+    test_model(test_loader, model, loss_function)
+    print()
 
 results = [] #(predicted, actual)
 model.eval()
@@ -165,15 +161,19 @@ compare_df = pd.DataFrame(index = sj_test.index, columns=['predicted', 'actual']
 compare_df['predicted'] = [int(x[0]) for x in results]
 compare_df['actual'] = [int(x[1]) for x in results]
 
+print(compare_df)
+
+'''
 plt.clf()
 figs, axes = plt.subplots(nrows=1, ncols=1)
 compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-#plt.savefig('SJ-FeedForwardNN-263epochs-4Layers')
+#plt.savefig('BatchedLSTMX100epochs-2Layers')
 plt.show()
 
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
+'''

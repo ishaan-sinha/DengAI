@@ -179,13 +179,16 @@ compare_df = pd.DataFrame(index = sj_test.index, columns=['predicted', 'actual']
 compare_df['predicted'] = [int(x[0]) for x in results]
 compare_df['actual'] = [int(x[1]) for x in results]
 
+print(compare_df)
+
 plt.clf()
 figs, axes = plt.subplots(nrows=1, ncols=1)
 compare_df.actual.plot(ax=axes, label="actual", alpha = 0.4)
-compare_df.predicted.plot(ax=axes, label="predicted", alpha = 0.4)
+compare_df.predicted.plot(ax=axes, label="predicted")
+#plt.axvline(x = sjData.index[len(sj_train)], color = 'red', linestyle = '--')
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('TOTALBatchedLSTMX-75epochs+Weightdecay')
+plt.savefig('TOTALBatchedLSTMX-75epochs + Weightdecay')
 plt.show()
 
 from sklearn.metrics import mean_absolute_percentage_error

@@ -109,7 +109,7 @@ class ShallowRegressionLSTM(nn.Module):
 
         return out
 
-learning_rate = .0005
+learning_rate = .001
 num_hidden_units = 100
 
 model = ShallowRegressionLSTM(num_sensors=len(sjData.axes[1]) - 1, hidden_units=num_hidden_units)
@@ -117,6 +117,7 @@ loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
+train_loss = []
 def train_model(data_loader, model, loss_function, optimizer):
     num_batches = len(data_loader)
     total_loss = 0
@@ -129,13 +130,14 @@ def train_model(data_loader, model, loss_function, optimizer):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
         total_loss += loss.item()
 
     avg_loss = total_loss / num_batches
+    train_loss.append(avg_loss)
     print(f"Train loss: {avg_loss}")
 
 
+test_loss = []
 def test_model(data_loader, model, loss_function):
     num_batches = len(data_loader)
     total_loss = 0
@@ -147,6 +149,7 @@ def test_model(data_loader, model, loss_function):
             total_loss += loss_function(output, y).item()
 
     avg_loss = total_loss / num_batches
+    test_loss.append(avg_loss)
     print(f"Test loss: {avg_loss}")
 
 
@@ -154,14 +157,13 @@ print("Untrained test\n--------")
 test_model(test_loader, model, loss_function)
 print()
 
-epochs = 200
+epochs = 75
 
 for ix_epoch in range(epochs):
-    if(ix_epoch%10 == 0):
-        print(f"Epoch {ix_epoch}\n---------")
-        train_model(train_loader, model, loss_function, optimizer=optimizer)
-        test_model(test_loader, model, loss_function)
-        print()
+    print(f"Epoch {ix_epoch}\n---------")
+    train_model(train_loader, model, loss_function, optimizer=optimizer)
+    test_model(test_loader, model, loss_function)
+    print()
 
 results = [] #(predicted, actual)
 model.eval()
@@ -180,9 +182,24 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-#plt.savefig('SJ-FeedForwardNN-263epochs-4Layers')
+plt.savefig('TOTALBatchedLSTMX-75epochs + Weightdecay + 1atatime')
 plt.show()
+
 
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
+
+
+'''
+
+print(len(train_loss))
+plt.plot(train_loss)
+plt.savefig("BatchedLSTM2layer1atatime - Train Loss - 200epochs")
+plt.show()
+
+print(len(test_loss))
+plt.plot(test_loss)
+plt.savefig("BatchedLSTM2layeratatime - Test Loss - 200epochs")
+plt.show()
+'''

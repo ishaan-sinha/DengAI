@@ -33,12 +33,19 @@ def preprocess_data(data_path, labels_path=None):
 
     return sj, iq
 
-sj_train, iq_train = preprocess_data('/dengue_features_train.csv',
-                                     labels_path="/CSV/dengue_labels_train.csv")
+sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
+                                     labels_path="../CSV/dengue_labels_train.csv")
 
-sj_train['date'] = pd.to_datetime(sj_train['week_start_date'])
-sj_train.set_index('date', inplace = True)
-sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #frequency is weekly
+from datetime import datetime, date, timedelta
+
+df = pd.DataFrame(np.nan, index=[datetime.strptime('1995-12-25', '%Y-%m-%d'), datetime.strptime('2000-12-25', '%Y-%m-%d'), datetime.strptime('2006-12-25', '%Y-%m-%d')], columns=sj_train.columns)
+sj_train.set_index(pd.to_datetime(sj_train['week_start_date'], format='%Y-%m-%d'), inplace = True)
+sj_train.index = pd.DatetimeIndex(sj_train.index)
+sj_train = pd.concat([sj_train, df])
+sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #period is one week
+sj_train.sort_index(inplace = True)
+sj_train.interpolate(option = 'spline')
+sj_train.fillna(method='ffill', inplace=True)
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.arima.model import ARIMA
@@ -86,7 +93,8 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('SARIMA(2,0,2)(1,0,1,52)')
+#plt.savefig('SARIMA(2,0,2)(1,0,1,52)')
+plt.show()
 from sklearn.metrics import r2_score
 
 compare_df.dropna(inplace = True)

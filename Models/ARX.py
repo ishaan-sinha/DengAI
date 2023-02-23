@@ -49,6 +49,14 @@ sj_train_subtest.to_csv('subtestData.csv')
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 aic_values = {}
+
+
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+plot_acf(sj_train_subtrain['total_cases'])
+plt.show()
+plot_pacf(sj_train_subtrain['total_cases'])
+plt.show()
 '''
 for lag in range(1, 10):
     model = AutoReg(sj_train_subtrain['total_cases'], exog = sj_train_subtrain[['last_year_cases', 'reanalysis_specific_humidity_g_per_kg',
@@ -110,6 +118,7 @@ print("best lag:" + str(best_lag))
 #Best lag is 10 when put on subtrain
 #Best lag is 283
 '''
+'''
 best_lag = 18
 
 
@@ -145,3 +154,4 @@ compare_df.dropna(inplace = True)
 print(mean_squared_error(compare_df['actual'], compare_df['predicted'], squared=False))
 print(mean_absolute_error(compare_df['actual'], compare_df['predicted']))
 print(r2_score(compare_df['actual'], compare_df['predicted']))
+'''

@@ -35,11 +35,23 @@ def preprocess_data(data_path, labels_path=None):
     return sj, iq
 
 sj_train, iq_train = preprocess_data('../CSV/dengue_features_train.csv',
-                                     labels_path="CSV/dengue_labels_train.csv")
+                                     labels_path="../CSV/dengue_labels_train.csv")
 
-sj_train['date'] = pd.to_datetime(sj_train['week_start_date'])
-sj_train.set_index('date', inplace = True)
-sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #frequency is weekly
+from datetime import datetime, date, timedelta
+
+df = pd.DataFrame(np.nan, index=[datetime.strptime('1995-12-25', '%Y-%m-%d'), datetime.strptime('2000-12-25', '%Y-%m-%d'), datetime.strptime('2006-12-25', '%Y-%m-%d')], columns=sj_train.columns)
+sj_train.set_index(pd.to_datetime(sj_train['week_start_date'], format='%Y-%m-%d'), inplace = True)
+sj_train.index = pd.DatetimeIndex(sj_train.index)
+sj_train = pd.concat([sj_train, df])
+
+
+sj_train.index = pd.DatetimeIndex(sj_train.index).to_period('W') #period is one week
+sj_train.sort_index(inplace = True)
+sj_train.interpolate(option = 'spline')
+sj_train.fillna(method='ffill', inplace=True)
+#Extremely janky but works
+
+
 sj_train['last_year_cases'] = sj_train['total_cases'].shift(52, axis = 0)
 
 
