@@ -88,8 +88,8 @@ compare_df.actual.plot(ax=axes, label="actual")
 compare_df.predicted_mean.plot(ax=axes, label="predicted")
 plt.suptitle("Dengue Predicted Cases vs. Actual Cases")
 plt.legend()
-plt.savefig('(2,0,2)(1,0,1,52)[weather4, lastyear, week and month cyclic encodings]')
 
+plt.show()
 from sklearn.metrics import r2_score
 
 compare_df.dropna(inplace = True)
